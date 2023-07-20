@@ -32,24 +32,28 @@ Written by Hue, the Centipede Youkai
 SAMMI2Warudo_initialize();
 
 [insert_hook]
+case "WARUDO - Open":{
+	createWarudoWebSocketClient();
+} break
+
 case "WARUDO - Get Toggles":{
-	requestToggles();
+	WARUDO_requestToggles();
 } break
 
 case "WARUDO - Get Recievers":{
-	requestRecievers();
+	WARUDO_requestRecievers();
 } break
 
-case "WARUDO -Trigger":{
-	requestSendTrigger(LioranBoardJSON.RECIEVER);
+case "WARUDO - Trigger":{
+	WARUDO_requestSendTrigger(LioranBoardJSON.RECIEVER);
 } break
 
 case "WARUDO - Toggle":{
-	requestSendToggle(LioranBoardJSON.RECIEVER);
+	WARUDO_requestSendToggle(LioranBoardJSON.RECIEVER);
 } break
 
 case "WARUDO - Message":{
-	requestSendMessage(LioranBoardJSON.RECIEVER, LioranBoardJSON.MESSAGE);
+	WARUDO_requestSendMessage(LioranBoardJSON.RECIEVER, LioranBoardJSON.MESSAGE);
 } break
 
 [insert_script]
@@ -61,9 +65,10 @@ window[`${WARUDO_PLUGINNAME}`] = {};
 
 ///
 window[`${WARUDO_PLUGINNAME}`].ACTIONS = {
+	OPEN: 'WARUDO - Open',
 	GETTOGGLES: 'WARUDO - Get Toggles',
 	GETRECIEVERS: 'WARUDO - Get Recievers',
-	TRIGGER:'WARUDO -Trigger',
+	TRIGGER:'WARUDO - Trigger',
 	TOGGLE:'WARUDO - Toggle',
 	MESSAGE:'WARUDO - Message'
 }
@@ -72,11 +77,7 @@ window[`${WARUDO_PLUGINNAME}`].ACTIONS = {
 window[`${WARUDO_PLUGINNAME}`].WEBSOCKET_STATES = { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 };
 
 ///
-window[`${WARUDO_PLUGINNAME}`].DATA = { 
-	RECIEVERS: [
-		""
-	]
-};
+window[`${WARUDO_PLUGINNAME}`].DATA = {RECIEVERS: [""]};
 
 ///
 window[`${WARUDO_PLUGINNAME}`].HELPERS = {
@@ -125,38 +126,30 @@ window[`${WARUDO_PLUGINNAME}`].HELPERS = {
 			data: {}
 		};
 	},
-	sendMessageToWARUDO: (request) => {
-		if (window.WARUDO_WebSocket) {
-			window.WARUDO_WebSocket.send(JSON.stringify(request));
-		}
-		else {
-			createWarudoWebSocketClient(() => {window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request)});
-		}
+	SAMMI2Warudo_insertBaseCommands: () => {
+		SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.OPEN, 3355443, 52, {});
+	
+		// SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.GETTOGGLES, 3355443, 52, {
+		// 	//Token: ["Save Token to Variable", 14, ""] //When the server responds with the auth token, save to global OR user-defined variable
+		// });
+	
+		// SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.GETRECIEVERS, 3355443, 52, {
+		// 	//Token: ["Save Token to Variable", 14, ""] //When the server responds with the auth token, save to global OR user-defined variable
+		// });
+	
+		SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.TRIGGER, 3355443, 52, {
+			RECIEVER: ["Reciever", 20, "", null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS]
+		});
+	
+		SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.TOGGLE, 3355443, 52, {
+			RECIEVER: ["Reciever", 20, "",  null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS]
+		});
+	
+		SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.MESSAGE, 3355443, 52, {
+			RECIEVER: ["Reciever", 20, "",  null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS],
+			MESSAGE: ["Message", 14, ""]
+		});
 	}
-}
-
-//Inserts base extension commands into SAMMI
-function SAMMI2Warudo_insertBaseCommands() {
-	SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.GETTOGGLES, 3355443, 52, {
-		//Token: ["Save Token to Variable", 14, ""] //When the server responds with the auth token, save to global OR user-defined variable
-	});
-
-	// SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.GETRECIEVERS, 3355443, 52, {
-	// 	//Token: ["Save Token to Variable", 14, ""] //When the server responds with the auth token, save to global OR user-defined variable
-	// });
-
-	SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.TRIGGER, 3355443, 52, {
-		RECIEVER: ["Reciever", 20, "", null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS]
-	});
-
-	SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.TOGGLE, 3355443, 52, {
-		RECIEVER: ["Reciever", 20, "",  null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS]
-	});
-
-	SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.MESSAGE, 3355443, 52, {
-		RECIEVER: ["Reciever", 20, "",  null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS],
-		MESSAGE: ["Message", 14, ""]
-	});
 }
 
 //Create the socket by which to faciliate comms with Warudo with
@@ -183,44 +176,52 @@ function createWarudoWebSocketClient(callback = null) {
 	if (callback) callback();
 }
 
+function WARUDO_sendRequestToWARUDO (request) {
+	if (window.WARUDO_WebSocket) {
+		window.WARUDO_WebSocket.send(JSON.stringify(request));
+	}
+	else {
+		createWarudoWebSocketClient(() => {WARUDO_sendRequestToWARUDO(request)});
+	}
+}
 //#region Request Functions for VTS
 
-async function requestToggles() {
+async function WARUDO_requestToggles() {
 	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("getToggles");
-	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+	WARUDO_sendRequestToWARUDO(request);
 }
 
-async function requestRecievers() {
+async function WARUDO_requestRecievers() {
 	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("getReceivers");
 	request.data.type = '';
-	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+	WARUDO_sendRequestToWARUDO(request);
 }
 
-async function requestSendTrigger(reciever) {
+async function WARUDO_requestSendTrigger(reciever) {
 	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("trigger");
 	request.data.receiverName = reciever;
-	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+	WARUDO_sendRequestToWARUDO(request);
 }
 
-async function requestSendToggle(reciever) {
+async function WARUDO_requestSendToggle(reciever) {
 	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("toggle");
 	request.data.receiverName = reciever;
-	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+	WARUDO_sendRequestToWARUDO(request);
 }
 
-async function requestSendMessage (reciever, message) {
+async function WARUDO_requestSendMessage (reciever, message) {
 	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("message");
 	request.data.receiverName = reciever;
 	request.data.message = message;
-	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+	WARUDO_sendRequestToWARUDO(request);
 }
 //#endregion End Request Functions for Warudo
 
 function SAMMI2Warudo_initialize() {
 	if (sammiclient) {
 		console.debug("SAMMI2Warudo Started...");
-		createWarudoWebSocketClient();
-		SAMMI2Warudo_insertBaseCommands();
+		// createWarudoWebSocketClient();
+		window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_insertBaseCommands();
 		return;
 	}
 
@@ -230,3 +231,4 @@ function SAMMI2Warudo_initialize() {
 	}
 }
 [insert_over]
+{ "deck_data": "{ \"background_color\": 4210752.0, \"on\": true, \"grid_y\": 6.0, \"snap_grid\": 1.0, \"lb_version\": \"2023.2.2\", \"background_image\": \"\", \"sammi_version\": \"2023.2.2\", \"encrypted\": false, \"adaptive_resizing\": 1.0, \"unique_id\": \"20230719172746264277429\", \"button_list\": [ { \"color\": 12632256.0, \"persistent\": 1.0, \"text\": \"Warudo - Open\", \"release_duration\": 0.0, \"queueable\": 0.0, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"extcmd\": \"WARUDO - Open\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": 0.0, \"init_variable\": \"\", \"deck\": 19.0, \"width\": 1.0, \"button_id\": \"1DFSD23FDS14F65DS4F\", \"button_duration\": 0.0, \"y\": 0.0, \"switch_deck\": \"\", \"height\": 0.16666666666666668517038374375261, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": 0.0 }, { \"color\": 12632256.0, \"persistent\": 1.0, \"text\": \"Get Toggles\", \"release_duration\": 0.0, \"queueable\": 0.0, \"command_list\": [ ], \"press_type\": 0.0, \"x\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": 0.0, \"init_variable\": \"\", \"deck\": 19.0, \"width\": 1.0, \"button_id\": \"F45D4FDS4GRF86HG4HT\", \"button_duration\": 0.0, \"y\": 0.16666666666666668517038374375261, \"switch_deck\": \"\", \"height\": 0.16666666666666668517038374375261, \"release_list\": [ ], \"functions\": 64.0, \"stretch\": 0.0 }, { \"color\": 12632256.0, \"persistent\": 1.0, \"text\": \"Trigger\", \"release_duration\": 0.0, \"queueable\": 0.0, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"RECIEVER\": \"TriggerA\", \"extcmd\": \"WARUDO - Trigger\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": 0.0, \"init_variable\": \"\", \"deck\": 19.0, \"width\": 1.0, \"button_id\": \"456ADFS54GH65T4HT4GH9YRJ\", \"button_duration\": 0.0, \"y\": 0.5, \"switch_deck\": \"\", \"height\": 0.16666666666666668517038374375261, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": 0.0 }, { \"color\": 12632256.0, \"persistent\": true, \"text\": \"Get Recievers\", \"release_duration\": 0.0, \"queueable\": false, \"command_list\": [ ], \"press_type\": 0.0, \"x\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": false, \"init_variable\": \"\", \"deck\": 19.0, \"width\": 1.0, \"button_id\": \"4FA6SD54F9DA8SG4D5S4G56A4G\", \"button_duration\": 0.0, \"y\": 0.33333333333333337034076748750522, \"switch_deck\": \"\", \"height\": 0.16666666666666668517038374375261, \"release_list\": [ ], \"functions\": 64.0, \"stretch\": false }, { \"color\": 12632256.0, \"persistent\": true, \"text\": \"Toggle\", \"release_duration\": 0.0, \"queueable\": false, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"RECIEVER\": \"ToggleB\", \"extcmd\": \"WARUDO - Toggle\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": false, \"init_variable\": \"\", \"deck\": 19.0, \"width\": 1.0, \"button_id\": \"G65TR4HS65T74W94857Y899\", \"button_duration\": 0.0, \"y\": 0.66666666666666674068153497501044, \"switch_deck\": \"\", \"height\": 0.16666666666666668517038374375261, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": false }, { \"color\": 12632256.0, \"persistent\": true, \"text\": \"Message\", \"release_duration\": 0.0, \"queueable\": false, \"command_list\": [ { \"cmd\": 0.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": true, \"ms\": 0.0, \"sel\": false, \"dis\": false, \"xpan\": 0.0, \"MESSAGE\": \"Test Message B\", \"RECIEVER\": \"MessageZ\", \"extcmd\": \"WARUDO - Message\", \"ext\": \"SAMMI Bridge\" } ], \"press_type\": 0.0, \"x\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": false, \"init_variable\": \"\", \"deck\": 19.0, \"width\": 1.0, \"button_id\": \"2GFD1H5T1G56RDE4JY566456E4J\", \"button_duration\": 0.0, \"y\": 0.83333333333333337034076748750522, \"switch_deck\": \"\", \"height\": 0.16666666666666668517038374375261, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": false } ], \"deck_name\": \"SAMMI2WARUDO - Example\", \"grid_x\": 1.0, \"stretch\": 0.0 }", "unique_id": "20230719172746264277429", "deck_verification_code": "32294488255d64628a8e71b5a8d3abb741743aa9", "include_image": { } }

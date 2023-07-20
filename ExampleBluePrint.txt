@@ -1,0 +1,169 @@
+{
+  "id": "14eb6de1-c85b-407b-9144-622a3df5c58a",
+  "enabled": true,
+  "name": "SAMMI2WarudoExtension Example",
+  "panningX": -139.983,
+  "panningY": 465.366638,
+  "scaling": 0.708402634,
+  "nodes": {
+    "39c60251-1c6c-4aaf-af30-f6722f97f5ca": {
+      "id": "39c60251-1c6c-4aaf-af30-f6722f97f5ca",
+      "dataInputs": {
+        "Status": {
+          "type": "string",
+          "value": null
+        },
+        "ReceiverName": {
+          "type": "string",
+          "value": "\"MessageZ\""
+        }
+      },
+      "typeId": "cc63b0b0-194d-4d74-9e52-2531ae89fd22",
+      "name": "ON_STREAM_DECK_MESSAGE",
+      "x": 202.56131,
+      "y": 126.460907
+    },
+    "4dbc8f28-99a0-4bc2-8dce-cb7d9acd2093": {
+      "id": "4dbc8f28-99a0-4bc2-8dce-cb7d9acd2093",
+      "dataInputs": {
+        "Source": {
+          "type": "string",
+          "value": "\"audioclip://resources/Sounds/HIT AND PUNCH/AUDIO/BONUS ELEMENTS/WHOOSH AND MOVEMENT/WHOOSH_ARM_SWING_01\""
+        },
+        "Delay": {
+          "type": "float",
+          "value": "0.0"
+        }
+      },
+      "typeId": "b8d8e162-6b51-4889-bf42-d7bc6f430b85",
+      "name": "PLAY_SOUND",
+      "x": 567.471741,
+      "y": -332.4489
+    },
+    "faca2745-f528-4f3f-99ab-c7735a504d3a": {
+      "id": "faca2745-f528-4f3f-99ab-c7735a504d3a",
+      "dataInputs": {
+        "Status": {
+          "type": "string",
+          "value": null
+        },
+        "ReceiverName": {
+          "type": "string",
+          "value": "\"TriggerA\""
+        }
+      },
+      "typeId": "25fea368-e2e4-486b-91ee-aab4350b39f5",
+      "name": "ON_STREAM_DECK_TRIGGER",
+      "x": 210.90773,
+      "y": -402.72818
+    },
+    "279fe132-fda7-4c0c-9e6b-84b9c1afc32a": {
+      "id": "279fe132-fda7-4c0c-9e6b-84b9c1afc32a",
+      "dataInputs": {
+        "ToggleState": {
+          "type": "bool",
+          "value": "false"
+        },
+        "Status": {
+          "type": "string",
+          "value": null
+        },
+        "ReceiverName": {
+          "type": "string",
+          "value": "\"ToggleB\""
+        }
+      },
+      "typeId": "8128e51d-cc23-4167-9402-6b5e55b97766",
+      "name": "ON_STREAM_DECK_TOGGLE",
+      "x": 202.645676,
+      "y": -188.410812
+    },
+    "8832b961-3a3f-46ad-8aca-e439d4db22bc": {
+      "id": "8832b961-3a3f-46ad-8aca-e439d4db22bc",
+      "dataInputs": {
+        "Source": {
+          "type": "string",
+          "value": "\"audioclip://resources/Sounds/HIT AND PUNCH/AUDIO/BONUS ELEMENTS/WHOOSH AND MOVEMENT/WHOOSH_ARM_SWING_HEAVY\""
+        },
+        "Delay": {
+          "type": "float",
+          "value": "0.0"
+        }
+      },
+      "typeId": "b8d8e162-6b51-4889-bf42-d7bc6f430b85",
+      "name": "PLAY_SOUND",
+      "x": 927.697,
+      "y": 22.3183918
+    },
+    "0159bce2-7311-47ec-a572-f48a3efcf3f8": {
+      "id": "0159bce2-7311-47ec-a572-f48a3efcf3f8",
+      "dataInputs": {
+        "TargetGraph": {
+          "type": "string",
+          "value": null
+        },
+        "VariableName": {
+          "type": "string",
+          "value": "\"MessageZContent\""
+        },
+        "Value": {
+          "type": "string",
+          "value": "\"Test Message B\""
+        }
+      },
+      "typeId": "05b99738-0e5a-4d4c-a885-18ddfd477d17",
+      "name": "SET_STRING_VARIABLE",
+      "x": 935.0729,
+      "y": -341.674957
+    }
+  },
+  "dataConnections": [
+    {
+      "outputNode": "39c60251-1c6c-4aaf-af30-f6722f97f5ca",
+      "inputNode": "0159bce2-7311-47ec-a572-f48a3efcf3f8",
+      "outputPort": "Message",
+      "inputPort": "Value"
+    }
+  ],
+  "flowConnections": [
+    {
+      "outputNode": "39c60251-1c6c-4aaf-af30-f6722f97f5ca",
+      "inputNode": "4dbc8f28-99a0-4bc2-8dce-cb7d9acd2093",
+      "outputPort": "Exit",
+      "inputPort": "Enter"
+    },
+    {
+      "outputNode": "279fe132-fda7-4c0c-9e6b-84b9c1afc32a",
+      "inputNode": "4dbc8f28-99a0-4bc2-8dce-cb7d9acd2093",
+      "outputPort": "IfYes",
+      "inputPort": "Enter"
+    },
+    {
+      "outputNode": "279fe132-fda7-4c0c-9e6b-84b9c1afc32a",
+      "inputNode": "8832b961-3a3f-46ad-8aca-e439d4db22bc",
+      "outputPort": "IfNo",
+      "inputPort": "Enter"
+    },
+    {
+      "outputNode": "4dbc8f28-99a0-4bc2-8dce-cb7d9acd2093",
+      "inputNode": "0159bce2-7311-47ec-a572-f48a3efcf3f8",
+      "outputPort": "Exit",
+      "inputPort": "Enter"
+    },
+    {
+      "outputNode": "faca2745-f528-4f3f-99ab-c7735a504d3a",
+      "inputNode": "4dbc8f28-99a0-4bc2-8dce-cb7d9acd2093",
+      "outputPort": "Exit",
+      "inputPort": "Enter"
+    }
+  ],
+  "properties": {
+    "id": "c564f845-912b-4aa0-8c95-f355c7210df8",
+    "dataInputs": {
+      "Variables": {
+        "type": "Warudo.Core.Graphs.GraphVariable[]",
+        "value": "[{\"id\":\"54307576-1cb3-4beb-a74f-7e82a427f79b\",\"dataInputs\":{\"Name\":{\"type\":\"string\",\"value\":\"\\\"MessageZContent\\\"\"},\"DuplicateNameWarning\":{\"type\":\"string\",\"value\":\"\\\"**A variable with this name already exists.**\\\"\"},\"VariableType\":{\"type\":\"Warudo.Core.Graphs.GraphVariableType\",\"value\":\"{\\\"label\\\":\\\"String\\\",\\\"value\\\":3,\\\"description\\\":null,\\\"icon\\\":null}\"},\"BooleanValue\":{\"type\":\"bool\",\"value\":\"false\"},\"IntegerValue\":{\"type\":\"int\",\"value\":\"0\"},\"FloatValue\":{\"type\":\"float\",\"value\":\"0.0\"},\"StringValue\":{\"type\":\"string\",\"value\":\"\\\"Test Message B\\\"\"}}}]"
+      }
+    }
+  }
+}
