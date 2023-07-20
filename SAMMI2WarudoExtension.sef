@@ -1,0 +1,232 @@
+[extension_name]
+SAMMI2WarudoExtension
+
+[extension_info]
+Written by Hue, the Centipede Youkai
+
+[insert_external]
+<style type="">
+  * {
+      box-sizing: border-box;
+    }
+</style>
+
+<div class="row">
+  <p>SAMMI2WarudoExtension: Interfaces SAMMI with Warudo by invoking endpoints on the Warudo API via Commands</p>
+</div>
+<div class="row">
+  <div class="column">
+    <img class="hue-img" src="https://i.imgur.com/PXr3Lez.png"></img>
+  </div>
+  <div class="column">
+    <p>Created by Hue, the Centipede Youkai</p> 
+    <a href="https://twitter.com/Hue_SwordDevil">Twitter</a>
+    <a href="https://github.com/HueVirtualCreature/SAMMI2WarudoExtension">GitHub</a>
+    <p>You may access the commands under Extension Commands > SAMMI Bridge > Warudo - *</p>
+    <p>Please keep in mind that the Bridge MUST BE OPEN in order for any of its commands to work.</p>
+    <p>Version: v0.1.0.0a</p>
+  </div>
+</div>
+
+[insert_command]
+SAMMI2Warudo_initialize();
+
+[insert_hook]
+case "WARUDO - Get Toggles":{
+	requestToggles();
+} break
+
+case "WARUDO - Get Recievers":{
+	requestRecievers();
+} break
+
+case "WARUDO -Trigger":{
+	requestSendTrigger(LioranBoardJSON.RECIEVER);
+} break
+
+case "WARUDO - Toggle":{
+	requestSendToggle(LioranBoardJSON.RECIEVER);
+} break
+
+case "WARUDO - Message":{
+	requestSendMessage(LioranBoardJSON.RECIEVER, LioranBoardJSON.MESSAGE);
+} break
+
+[insert_script]
+const WARUDO_SERVER = 'ws://localhost:19069';
+const WARUDO_PLUGINNAME = "SAMMI2WarudoExtension";
+const WARUDO_AUTHORNAME = "Hue_vCreature";
+
+window[`${WARUDO_PLUGINNAME}`] = {};
+
+///
+window[`${WARUDO_PLUGINNAME}`].ACTIONS = {
+	GETTOGGLES: 'WARUDO - Get Toggles',
+	GETRECIEVERS: 'WARUDO - Get Recievers',
+	TRIGGER:'WARUDO -Trigger',
+	TOGGLE:'WARUDO - Toggle',
+	MESSAGE:'WARUDO - Message'
+}
+
+///
+window[`${WARUDO_PLUGINNAME}`].WEBSOCKET_STATES = { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 };
+
+///
+window[`${WARUDO_PLUGINNAME}`].DATA = { 
+	RECIEVERS: [
+		""
+	]
+};
+
+///
+window[`${WARUDO_PLUGINNAME}`].HELPERS = {
+	GETRANDOMID: () => {
+		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+			return v.toString(16);
+		});
+	},
+	POSTTOSAMMICONSOLE: (message, level = 1) => {
+		switch(level) {
+			case 0:
+				SAMMI.notification("WARUDO: " + message);
+				break;
+			case 1:
+				SAMMI.alert("WARUDO: " + message);
+				break;
+		}
+	},
+	INTERPRET_RESPONSE: (responseData) => {
+		if (!responseData) { throw 'interpretResponse: responseData cannot be null!'; }
+		switch(responseData.action) {
+			case "getToggles":
+				//Contains a key dict with state of toggles	
+				//responseData.data
+				break;
+			case "getReceivers":
+				window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS = responseData.data
+				break;
+			case "trigger":
+				debugger;
+				break;
+			case "toggle":
+				//Contains state
+				break;
+			case "message":
+				break;
+			default:
+				window[`${WARUDO_PLUGINNAME}`].HELPERS.POSTTOSAMMICONSOLE("Received an unknown message type: " + responseData.messageType + ". The handler for this event has not been implemented.");
+				break;
+		}
+	},
+	SAMMI2Warudo_generateBaseRequest: async (messageType) => {
+		return {
+			action: messageType,
+			data: {}
+		};
+	},
+	sendMessageToWARUDO: (request) => {
+		if (window.WARUDO_WebSocket) {
+			window.WARUDO_WebSocket.send(JSON.stringify(request));
+		}
+		else {
+			createWarudoWebSocketClient(() => {window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request)});
+		}
+	}
+}
+
+//Inserts base extension commands into SAMMI
+function SAMMI2Warudo_insertBaseCommands() {
+	SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.GETTOGGLES, 3355443, 52, {
+		//Token: ["Save Token to Variable", 14, ""] //When the server responds with the auth token, save to global OR user-defined variable
+	});
+
+	// SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.GETRECIEVERS, 3355443, 52, {
+	// 	//Token: ["Save Token to Variable", 14, ""] //When the server responds with the auth token, save to global OR user-defined variable
+	// });
+
+	SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.TRIGGER, 3355443, 52, {
+		RECIEVER: ["Reciever", 20, "", null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS]
+	});
+
+	SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.TOGGLE, 3355443, 52, {
+		RECIEVER: ["Reciever", 20, "",  null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS]
+	});
+
+	SAMMI.extCommand(window[`${WARUDO_PLUGINNAME}`].ACTIONS.MESSAGE, 3355443, 52, {
+		RECIEVER: ["Reciever", 20, "",  null, window[`${WARUDO_PLUGINNAME}`].DATA.RECIEVERS],
+		MESSAGE: ["Message", 14, ""]
+	});
+}
+
+//Create the socket by which to faciliate comms with Warudo with
+function createWarudoWebSocketClient(callback = null) {
+	window.WARUDO_WebSocket = new WebSocket(WARUDO_SERVER);
+
+		//Add Event Handlers
+		window.WARUDO_WebSocket.onmessage = function(event) {
+			if (event.data) {
+				const responseData = JSON.parse(event.data);
+				window[`${WARUDO_PLUGINNAME}`].HELPERS.INTERPRET_RESPONSE(responseData);
+			} else {
+				window[`${WARUDO_PLUGINNAME}`].HELPERS.POSTTOSAMMICONSOLE("Response data was empty", 1);
+			}
+		}
+		
+		window.WARUDO_WebSocket.onclose = function(event) {}
+
+		window.WARUDO_WebSocket.onopen = function(event) {
+			//TODO HUE Best place for this?
+			// if (callback) callback();
+		}
+
+	if (callback) callback();
+}
+
+//#region Request Functions for VTS
+
+async function requestToggles() {
+	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("getToggles");
+	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+}
+
+async function requestRecievers() {
+	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("getReceivers");
+	request.data.type = '';
+	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+}
+
+async function requestSendTrigger(reciever) {
+	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("trigger");
+	request.data.receiverName = reciever;
+	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+}
+
+async function requestSendToggle(reciever) {
+	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("toggle");
+	request.data.receiverName = reciever;
+	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+}
+
+async function requestSendMessage (reciever, message) {
+	let request = await window[`${WARUDO_PLUGINNAME}`].HELPERS.SAMMI2Warudo_generateBaseRequest("message");
+	request.data.receiverName = reciever;
+	request.data.message = message;
+	window[`${WARUDO_PLUGINNAME}`].HELPERS.sendMessageToWARUDO(request);
+}
+//#endregion End Request Functions for Warudo
+
+function SAMMI2Warudo_initialize() {
+	if (sammiclient) {
+		console.debug("SAMMI2Warudo Started...");
+		createWarudoWebSocketClient();
+		SAMMI2Warudo_insertBaseCommands();
+		return;
+	}
+
+	if (!sammiclient) {
+		setTimeout(SAMMI2Warudo_initialize, 1000);
+		return;
+	}
+}
+[insert_over]
